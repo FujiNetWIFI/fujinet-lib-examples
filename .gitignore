@@ -6,3 +6,7 @@ dist/
 altirra-debug.ini
 Makefile.options
 *.jar
+*.dsk
+*.xex
+*.prg
+*.po

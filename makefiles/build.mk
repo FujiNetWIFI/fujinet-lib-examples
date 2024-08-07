@@ -37,7 +37,7 @@ SHELL := /usr/bin/env bash
 ALL_TASKS =
 DISK_TASKS =
 
--include ../makefiles/os.mk
+-include ../../makefiles/os.mk
 
 CC := cl65
 
@@ -88,8 +88,8 @@ ASFLAGS += --asm-include-dir $(SRCDIR)
 CFLAGS += --include-dir $(SRCDIR)
 
 # allow for additional flags etc
--include ../makefiles/common.mk
--include ../makefiles/custom-$(CURRENT_PLATFORM).mk
+-include ../../makefiles/common.mk
+-include ../../makefiles/custom-$(CURRENT_PLATFORM).mk
 
 # allow for application specific config
 -include ./application.mk

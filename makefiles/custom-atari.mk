@@ -16,7 +16,9 @@ DISK_TASKS += .atr
 .atr:
 	$(call MKDIR,$(DIST_DIR)/atr)
 	cp $(DIST_DIR)/$(PROGRAM_TGT)$(SUFFIX) $(DIST_DIR)/atr/$(PROGRAM)$(SUFFIX)
-	rm $(DIST_DIR)/$(PROGRAM).atr
+	@if [ -f $(DIST_DIR)/$(PROGRAM).atr ] ; then \
+	  rm $(DIST_DIR)/$(PROGRAM).atr ; \
+	fi ;
 	dir2atr -S $(DIST_DIR)/$(PROGRAM).atr $(DIST_DIR)/atr
 	rm -rf $(DIST_DIR)/atr
 

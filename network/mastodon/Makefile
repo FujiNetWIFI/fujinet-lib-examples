@@ -14,7 +14,7 @@ all:
 		echo "-------------------------------------"; \
 		echo "Building $$target"; \
 		echo "-------------------------------------"; \
-		$(MAKE) --no-print-directory -f ../makefiles/build.mk CURRENT_TARGET=$$target PROGRAM=$(PROGRAM) $(MAKECMDGOALS); \
+		$(MAKE) --no-print-directory -f ../../makefiles/build.mk CURRENT_TARGET=$$target PROGRAM=$(PROGRAM) $(MAKECMDGOALS); \
 	done
 
 $(SUB_TASKS): _do_all
