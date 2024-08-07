@@ -1,2 +1,12 @@
 # fujinet-lib-examples
-The canonical set of micro apps and utilities to test, exercise, and play with the FujiNet using fn-lib
+
+
+The way to test, exercise and explore the use of FujiNet via the fn-lib libraries is here in this repo.
+
+
+
+## duck - webdav copy
+
+```shell
+duck --upload dav://anonymous@fujinet.home/dav/target-file source-file -existing overwrite
+```
