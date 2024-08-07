@@ -1,0 +1,1 @@
+Code that uses the fujinet core services via fn-lib is here.
