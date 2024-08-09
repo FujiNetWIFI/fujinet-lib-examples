@@ -10,3 +10,5 @@ Makefile.options
 *.xex
 *.prg
 *.po
+
+.vscode

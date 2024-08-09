@@ -13,13 +13,19 @@
 SUFFIX = .com
 DISK_TASKS += .atr
 
+PICOBOOT_DOWNLOAD_URL = https://github.com/FujiNetWIFI/assets/releases/download/picobin/picoboot.bin
+
 .atr:
 	$(call MKDIR,$(DIST_DIR)/atr)
 	cp $(DIST_DIR)/$(PROGRAM_TGT)$(SUFFIX) $(DIST_DIR)/atr/$(PROGRAM)$(SUFFIX)
 	@if [ -f $(DIST_DIR)/$(PROGRAM).atr ] ; then \
 	  rm $(DIST_DIR)/$(PROGRAM).atr ; \
 	fi ;
-	dir2atr -S $(DIST_DIR)/$(PROGRAM).atr $(DIST_DIR)/atr
+	@if [ ! -f $(DIST_DIR)/picoboot.bin ] ; then \
+		echo "Downloading picoboot.bin"; \
+		curl -sL $(PICOBOOT_DOWNLOAD_URL) -o $(DIST_DIR)/picoboot.bin; \
+	fi
+	dir2atr -m -S -B $(DIST_DIR)/picoboot.bin $(DIST_DIR)/$(PROGRAM).atr $(DIST_DIR)/atr
 	rm -rf $(DIST_DIR)/atr
 
 ################################################################
