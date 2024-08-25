@@ -11,9 +11,9 @@
 #define TEST_KEY_ID 0xCC
 
 char write_buffer[65];
-char read_buffer[65];
+char read_buffer[66];
 
-char *version = "v1.0.1";
+char *version = "v1.0.2";
 
 int main(void)
 {
