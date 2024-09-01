@@ -4,7 +4,7 @@
 # See makefiles/build.mk for details on directory structure for src files and how to add custom extensions to the build.
 
 TARGETS = atari apple2 apple2enh
-PROGRAM := echo-test
+PROGRAM := echo
 
 SUB_TASKS := clean disk test release
 .PHONY: all help $(SUB_TASKS)

@@ -45,6 +45,10 @@ int main() {
     endpoint[1] = '1';
     endpoint[2] = ':';
 
+    memset(url_buffer, 0, sizeof(url_buffer));
+    strcat(url_buffer, endpoint);
+    strcat(url_buffer, echo_url);
+
     cursor(0);
     cputsxy(txp, yps + 6, "Testing. Please wait.");
 
@@ -86,33 +90,37 @@ void handle_err(char *reason) {
 
 uint8_t do_post(uint8_t v) {
     int n;
+    uint8_t tries = 0;
     uint8_t buf[1];
     uint8_t res[1];
 
-    // send a POST to <endpoint>/client with "name,version,screenX,screenY", and get the client id back
-    memset(url_buffer, 0, sizeof(url_buffer));
-    strcat(url_buffer, endpoint);
-    strcat(url_buffer, echo_url);
-
     buf[0] = v;
 
-    err = network_open(url_buffer, OPEN_MODE_HTTP_POST, OPEN_TRANS_NONE);
-    handle_err("post:open");
-
-    network_http_start_add_headers(url_buffer);
-    network_http_add_header(url_buffer, "Accept: */*");
-    // network_http_add_header(url_buffer, "Content-Type: text/plain");
-    network_http_end_add_headers(url_buffer);
+    // open the endpoint, try up to 5 times
+    err = 1;
+    while (err != 0) {
+        err = network_open(url_buffer, OPEN_MODE_HTTP_POST, OPEN_TRANS_NONE);
+        if (err != 0 && tries >= 5) {
+            handle_err("post:open [5]");
+        }
+        tries++;
+    }
 
     err = network_http_post_bin(url_buffer, buf, 1);
     handle_err("post:data");
 
-    // finally read the client id in the response, this is just 1 byte
-    n = network_read(url_buffer, (uint8_t *)res, 1);
-    if (n < 0) {
-        err = -n;
-        handle_err("read");
+    // read the response, this is just 1 byte. Try up to 5 times.
+    n = -1;
+    tries = 0;
+    while (n < 0) {
+        n = network_read(url_buffer, (uint8_t *)res, 1);
+        if (n < 0 && tries >= 5) {
+            err = -n;
+            handle_err("read");
+        }
+        tries++;
     }
+
     network_close(url_buffer);
     return res[0];
 
