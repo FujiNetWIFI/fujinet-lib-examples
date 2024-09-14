@@ -9,6 +9,10 @@
 #include <apple2.h>
 #endif
 
+#ifdef __ATARI__
+#include <atari.h>
+#endif
+
 #include "fujinet-network.h"
 
 #include "mastodon.h"
@@ -39,36 +43,24 @@ void main(void)
 			  handle_err(err, "parse");
 		}
 
-		line('=');
+		line(HEADING_START_CHAR);
 
-		count = network_json_query(url, display_name_query, (char *) buffer);
-		if (count < 0) {
-			handle_err(-count, "query");
-		}
-		filter_buf();
+		query_and_filter(display_name_query);
 		printf("%*s", screen_width, buffer);
 
-		count = network_json_query(url, created_at_query, (char *) buffer);
-		if (count < 0) {
-			handle_err(-count, "query");
-		}
-		filter_buf();
+		query_and_filter(created_at_query);
 		printf("%*s", screen_width, buffer);
 
-		line('-');
+		line(MESSAGE_START_CHAR);
 
-		count = network_json_query(url, content_query, (char *) buffer);
-		if (count < 0) {
-			handle_err(-count, "query");
-		}
-		filter_buf();
+		query_and_filter(content_query);
 		printf("%s\n", buffer);
 
-		line('-');
+		line(MESSAGE_END_CHAR);
 
 		network_close(url);
 
-		pause(32000);
+		pause(52000);
 	}
 }
 
@@ -84,6 +76,10 @@ void setup(void)
 		allow_lowercase(true);
 	}
 #endif
+#endif
+
+#ifdef __ATARI__
+	OS.color2 = 0;
 #endif
 
 	screensize(&screen_width, &screen_height);
@@ -106,10 +102,20 @@ void filter_buf(void)
 	register char *c;
 
 	for (c = buffer; *c != '\0'; ++c) {
-		if (!isprint(*c)) {
+		if (!isascii(*c) || !isprint(*c)) {
 			*c = '?';
 		}
 	}
+}
+
+void query_and_filter(char *query) {
+	int16_t count;
+	uint16_t i;
+	count = network_json_query(url, query, (char *) buffer);
+	if (count < 0) {
+			handle_err(-count, "query");
+	}
+	filter_buf();
 }
 
 void line(char type)
