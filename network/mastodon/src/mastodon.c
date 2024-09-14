@@ -12,6 +12,7 @@
 
 #include "mastodon.h"
 
+unsigned char screen_width;
 uint8_t buffer[1024];
 char url[] = "n1:https://oldbytes.space/api/v1/timelines/public?limit=1";
 char display_name_query[] = "/0/account/display_name";
@@ -43,13 +44,13 @@ void main(void)
 		if (count < 0) {
 			handle_err(-count, "query");
 		}
-		printf("%40s\n", buffer);
+		printf("%*s", screen_width, buffer);
 
 		count = network_json_query(url, created_at_query, (char *) buffer);
 		if (count < 0) {
 			handle_err(-count, "query");
 		}
-		printf("%40s\n", buffer);
+		printf("%*s", screen_width, buffer);
 
 		line('-');
 
@@ -69,7 +70,7 @@ void main(void)
 
 void setup(void)
 {
-	uint8_t init_r;
+	uint8_t init_r, screen_height;
 
 #ifdef __APPLE2__
 #ifdef __APPLE2ENH__
@@ -80,6 +81,8 @@ void setup(void)
 	}
 #endif
 #endif
+
+	screensize(&screen_width, &screen_height);
 
 	init_r = network_init();
 	if (init_r != FN_ERR_OK) {
@@ -96,9 +99,8 @@ void handle_err(uint8_t err, char *reason)
 
 void line(char type)
 {
-	unsigned char x, y;
+	uint8_t x = screen_width;
 
-	screensize(&x, &y);
 	while (x--) {
 		putchar(type);
 	}
