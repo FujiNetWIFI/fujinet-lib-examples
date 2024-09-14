@@ -34,7 +34,7 @@ int main(void)
 
 	fuji_set_appkey_details(TEST_CREATOR_ID, TEST_APP_ID, DEFAULT);
 
-	r = fuji_write_appkey(TEST_KEY_ID, write_count, (uint8_t *) &write_buffer[0]);;
+	r = fuji_write_appkey(TEST_KEY_ID, write_count, (uint8_t *) &write_buffer[0]);
 	cprintf("WRITE size: %d r: %hd\r\n", write_count, r);
 
 	r = fuji_read_appkey(TEST_KEY_ID, &read_count, (uint8_t *) &read_buffer[0]); // success is returned as true

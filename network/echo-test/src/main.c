@@ -29,7 +29,7 @@ int main() {
     revers(1);
     cputsxy(hxp, yps + 0, "                            ");
     cputsxy(hxp, yps + 1, " ECHO POST/READ Binary Test ");
-    cputsxy(hxp, yps + 2, "                            ");
+    cputsxy(hxp, yps + 2, "                     v1.0.2 ");
     revers(0);
 
     chlinexy(2, yps + 3, 36);

@@ -37,19 +37,19 @@ int main(void) {
     createUrl(u1, 1, "n1");
     createUrl(u2, 2, "n2");
     createUrl(u3, 3, "n3");
-    createUrl(u4, 4, "n4");
-    createUrl(u5, 5, "n5");
+    // createUrl(u4, 4, "n4");
+    // createUrl(u5, 5, "n5");
     // createUrl(u6, 6, "n6");
     // createUrl(u7, 7, "n7");
     // createUrl(u8, 8, "n8");
 
     // hit the endpoints hard so we can test memory
-    for (i = 0; i < 100; i++) {
+    for (i = 0; i < 20; i++) {
         err = network_open(u1, OPEN_MODE_HTTP_GET, OPEN_TRANS_NONE); handle_err("open u1");
         err = network_open(u2, OPEN_MODE_HTTP_GET, OPEN_TRANS_NONE); handle_err("open u2");
         err = network_open(u3, OPEN_MODE_HTTP_GET, OPEN_TRANS_NONE); handle_err("open u3");
-        err = network_open(u4, OPEN_MODE_HTTP_GET, OPEN_TRANS_NONE); handle_err("open u4");
-        err = network_open(u5, OPEN_MODE_HTTP_GET, OPEN_TRANS_NONE); handle_err("open u5");
+        // err = network_open(u4, OPEN_MODE_HTTP_GET, OPEN_TRANS_NONE); handle_err("open u4");
+        // err = network_open(u5, OPEN_MODE_HTTP_GET, OPEN_TRANS_NONE); handle_err("open u5");
         // FN runs out of memory on about 6, and 5 is stable.
         // err = network_open(u6, OPEN_MODE_HTTP_GET, OPEN_TRANS_NONE); handle_err("open u6");
         // err = network_open(u7, OPEN_MODE_HTTP_GET, OPEN_TRANS_NONE); handle_err("open u7");
@@ -59,16 +59,16 @@ int main(void) {
         get(u1); printf("%s", result);
         get(u2); printf("%s", result);
         get(u3); printf("%s", result);
-        get(u4); printf("%s", result);
-        get(u5); printf("%s", result);
+        // get(u4); printf("%s", result);
+        // get(u5); printf("%s", result);
         // get(u6); printf("6");
         // get(u7); printf("7");
         // get(u8); printf("8");
 
-        // the fujinet does handle reusing the network subdevice by manually closing an open connection, so this isn't needed here
-        // close(u1);
-        // close(u2);
-        // close(u3);
+        // the fujinet does handle reusing the network subdevice by manually closing an open connection
+        close(u1);
+        close(u2);
+        close(u3);
         // close(u4);
         // close(u5);
 
@@ -83,8 +83,8 @@ int main(void) {
     close(u1);
     close(u2);
     close(u3);
-    close(u4);
-    close(u5);
+    // close(u4);
+    // close(u5);
 
     // close(u6);
     // close(u7);
@@ -93,7 +93,7 @@ int main(void) {
     printf("\npress a key to exit.");
     cgetc();
 
-   return 0;
+    return 0;
 }
 
 

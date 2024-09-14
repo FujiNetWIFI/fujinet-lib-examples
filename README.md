@@ -11,4 +11,7 @@ This is to satisfy the build paths for finding the `makefiles` directories corre
 
 ```shell
 duck --upload dav://anonymous@fujinet.home/dav/target-file source-file -existing overwrite
+
+# copying from SD to local
+duck -d dav://anonymous@fujinet.home/dav/target-file /path/to/local/file
 ```

@@ -26,11 +26,7 @@ endif
 		echo "Generating debug.scr script for AppleWin"; \
 		echo 'echo "Loading symbols"' > build/debug.scr; \
 		awk '{printf("sym %s = %s\n", substr($$3, 2), $$2)}' < build/$(PROGRAM_TGT).lbl >> build/debug.scr; \
-		echo 'bpx _main' >> build/debug.scr; \
-		echo 'bpx _debug' >> build/debug.scr; \
-		echo 'bpx _network_open' >> build/debug.scr; \
-		echo 'bpx _sp_init' >> build/debug.scr; \
-		echo 'bpx _sp_dispatch' >> build/debug.scr; \
+		echo 'bpx _fuji_write_appkey' >> build/debug.scr; \
 	fi
 
 ALL_TASKS += .gendebug
