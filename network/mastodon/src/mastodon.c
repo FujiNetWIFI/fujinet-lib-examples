@@ -5,7 +5,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#ifdef __APPLE2__
+#if defined(__APPLE2__)
 #include <apple2.h>
 #include <peekpoke.h>
 #include <6502.h>
@@ -23,7 +23,7 @@ char content_query[] = "/0/content";
 char version[] = "v1.1.0";
 uint8_t err = 0;
 
-#ifdef __APPLE2__
+#if defined(__APPLE2__) && !defined(__APPLE2ENH__)
 static bool lowercase;
 #endif
 
@@ -77,7 +77,7 @@ void setup()
 {
 	uint8_t init_r = 0;
 
-#ifdef __APPLE2__
+#if defined(__APPLE2__) && !defined(__APPLE2ENH__)
     if (get_ostype() >= APPLE_IIE)
     {
       POKE(0xC00F,0); // ALTCHAR
@@ -123,7 +123,7 @@ void pause(unsigned long time)
 		;
 }
 
-#ifdef __APPLE2__
+#if defined(__APPLE2__) && !defined(__APPLE2ENH__)
 static void iputc(char c)
 {
   if (c >= 0x40 && c <= 0x5F /* uppercase */)
@@ -140,7 +140,7 @@ static void iputc(char c)
 
 static void hline(unsigned char l)
 {
-#ifdef __APPLE2__
+#if defined(__APPLE2__) && !defined(__APPLE2ENH__)
   if (lowercase)
   {
     while (l--)
@@ -152,6 +152,11 @@ static void hline(unsigned char l)
   {
     chline(l);
   }
+#elif defined(__APPLE2ENH__)
+    while (l--)
+    {
+      cputc(0xD3);
+    }
 #else
 	chline(l);
 #endif
@@ -160,7 +165,7 @@ static void hline(unsigned char l)
 
 void screen_put_inverse(char c)
 {
-#ifdef __APPLE2__
+#if defined(__APPLE2__) && !defined(__APPLE2ENH__)
   if (lowercase)
   {
     iputc(c);
@@ -181,7 +186,7 @@ void screen_put_inverse(char c)
 
 void screen_print_inverse(const char *s)
 {
-#ifdef __APPLE2__
+#if defined(__APPLE2__) && !defined(__APPLE2ENH__)
   if (lowercase)
   {
     char c;
