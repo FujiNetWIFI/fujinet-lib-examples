@@ -215,7 +215,6 @@ void clear_buffer() {
 
 void new_screen() {
   clrscr();
-  gotoxy(0, 0);
   printf("netread %s\n", version);
 }
 

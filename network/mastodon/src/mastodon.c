@@ -3,12 +3,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <ctype.h>
 
-#if defined(__APPLE2__)
+#ifdef __APPLE2__
 #include <apple2.h>
-#include <peekpoke.h>
-#include <6502.h>
 #endif
 
 #include "fujinet-network.h"
@@ -21,51 +18,48 @@ char display_name_query[] = "/0/account/display_name";
 char created_at_query[] = "/0/created_at";
 char content_query[] = "/0/content";
 char version[] = "v1.1.0";
-uint8_t err = 0;
-
-#if defined(__APPLE2__) && !defined(__APPLE2ENH__)
-static bool lowercase;
-#endif
 
 void main(void)
 {
-	int count = 0;
-	char line[41];
+	uint8_t err;
+	int16_t count;
+
 	setup();
-	new_screen();
-	while (1)
-	{
+	clrscr();
+	printf("mastodon %s\n", version);
+
+	while (1) {
+		printf("\n\n");
+
 		network_open(url, OPEN_MODE_READ, OPEN_TRANS_NONE);
 		err = network_json_parse(url);
-		handle_err("parse");
+		if (err != FN_ERR_OK) {
+			  handle_err(err, "parse");
+		}
+
+		line('=');
 
 		count = network_json_query(url, display_name_query, (char *) buffer);
 		if (count < 0) {
-			err = -count;
-			handle_err("query");
+			handle_err(-count, "query");
 		}
-
-		clrscr();
-		hline(40);
-		sprintf(line, "%40s", buffer);
-		screen_print_inverse(line);
+		printf("%40s\n", buffer);
 
 		count = network_json_query(url, created_at_query, (char *) buffer);
 		if (count < 0) {
-			err = -count;
-			handle_err("query");
+			handle_err(-count, "query");
 		}
-		sprintf(line, "%40s", buffer);
-		screen_print_inverse(line);
-		hline(40);
+		printf("%40s\n", buffer);
+
+		line('-');
 
 		count = network_json_query(url, content_query, (char *) buffer);
 		if (count < 0) {
-			err = -count;
-			handle_err("query");
+			handle_err(-count, "query");
 		}
 		printf("%s\n", buffer);
-		hline(40);
+
+		line('-');
 
 		network_close(url);
 
@@ -73,138 +67,47 @@ void main(void)
 	}
 }
 
-void setup()
+void setup(void)
 {
-	uint8_t init_r = 0;
+	uint8_t init_r;
 
-#if defined(__APPLE2__) && !defined(__APPLE2ENH__)
-    if (get_ostype() >= APPLE_IIE)
-    {
-      POKE(0xC00F,0); // ALTCHAR
-      allow_lowercase(true);
-      lowercase = true;
-    }
+#ifdef __APPLE2__
+#ifdef __APPLE2ENH__
+	videomode(VIDEOMODE_80COL);
+#else
+	if (get_ostype() >= APPLE_IIIEM) {
+		allow_lowercase(true);
+	}
+#endif
 #endif
 
-
 	init_r = network_init();
-	bzero(buffer, 1024);
-
-	if (init_r != 0)
-	{
-		err = init_r;
-		handle_err("network_init failed");
+	if (init_r != FN_ERR_OK) {
+		handle_err(init_r, "network_init failed");
 	}
-
-
 }
 
-void new_screen()
+void handle_err(uint8_t err, char *reason)
 {
-	clrscr();
-	gotoxy(0, 0);
-	printf("mastodon %s\n", version);
+	printf("Error: %d (d: %d) %s\n", err, fn_device_error, reason);
+	cgetc();
+	exit(1);
 }
 
-void handle_err(char *reason)
+void line(char type)
 {
-	if (err)
-	{
-		printf("Error: %d (d: %d) %s\n", err, fn_device_error, reason);
-		cgetc();
-		exit(1);
+	unsigned char x, y;
+
+	screensize(&x, &y);
+	while (x--) {
+		putchar(type);
 	}
 }
 
 void pause(unsigned long time)
 {
 	unsigned long i;
+
 	for (i = 0; i < time; i++)
 		;
-}
-
-#if defined(__APPLE2__) && !defined(__APPLE2ENH__)
-static void iputc(char c)
-{
-  if (c >= 0x40 && c <= 0x5F /* uppercase */)
-  {
-    c += 0x40;
-  }
-  else if (c >= 0x20 /* printable */)
-  {
-    c += 0x80;
-  }
-  cputc(c);
-}
-#endif
-
-static void hline(unsigned char l)
-{
-#if defined(__APPLE2__) && !defined(__APPLE2ENH__)
-  if (lowercase)
-  {
-    while (l--)
-    {
-      cputc(0xD3);
-    }
-  }
-  else
-  {
-    chline(l);
-  }
-#elif defined(__APPLE2ENH__)
-    while (l--)
-    {
-      cputc(0xD3);
-    }
-#else
-	chline(l);
-#endif
-
-}
-
-void screen_put_inverse(char c)
-{
-#if defined(__APPLE2__) && !defined(__APPLE2ENH__)
-  if (lowercase)
-  {
-    iputc(c);
-  }
-  else
-  {
-    revers(true);
-    cputc(c);
-    revers(false);
-  }
-#else
-    revers(true);
-    cputc(c);
-    revers(false);
-#endif
-
-}
-
-void screen_print_inverse(const char *s)
-{
-#if defined(__APPLE2__) && !defined(__APPLE2ENH__)
-  if (lowercase)
-  {
-    char c;
-    while (c = *s++)
-    {
-      iputc(c);
-    }
-  }
-  else
-  {
-    revers(true);
-    cputs(s);
-    revers(false);
-  }
-#else
-    revers(true);
-    cputs(s);
-    revers(false);
-#endif
-
 }
