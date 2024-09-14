@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <ctype.h>
 
 #ifdef __APPLE2__
 #include <apple2.h>
@@ -44,12 +45,14 @@ void main(void)
 		if (count < 0) {
 			handle_err(-count, "query");
 		}
+		filter_buf();
 		printf("%*s", screen_width, buffer);
 
 		count = network_json_query(url, created_at_query, (char *) buffer);
 		if (count < 0) {
 			handle_err(-count, "query");
 		}
+		filter_buf();
 		printf("%*s", screen_width, buffer);
 
 		line('-');
@@ -58,6 +61,7 @@ void main(void)
 		if (count < 0) {
 			handle_err(-count, "query");
 		}
+		filter_buf();
 		printf("%s\n", buffer);
 
 		line('-');
@@ -97,6 +101,17 @@ void handle_err(uint8_t err, char *reason)
 	exit(1);
 }
 
+void filter_buf(void)
+{
+	register char *c;
+
+	for (c = buffer; *c != '\0'; ++c) {
+		if (!isprint(*c)) {
+			*c = '?';
+		}
+	}
+}
+
 void line(char type)
 {
 	uint8_t x = screen_width;
@@ -110,6 +125,6 @@ void pause(unsigned long time)
 {
 	unsigned long i;
 
-	for (i = 0; i < time; i++)
+	for (i = 0; i < time; ++i)
 		;
 }

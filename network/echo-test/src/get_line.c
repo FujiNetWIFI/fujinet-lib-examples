@@ -5,6 +5,10 @@
 
 #include "get_line.h"
 
+#ifndef CH_DEL
+#define CH_DEL 0x7F
+#endif
+
 void get_line(char* buf, uint8_t max_len) {
 	uint8_t c;
 	uint16_t i = 0;
@@ -12,15 +16,17 @@ void get_line(char* buf, uint8_t max_len) {
 
 	cursor(1);
 
+	--max_len;
 	do {
-		gotox(i + init_x);
+		gotox(init_x + i);
 
 		c = cgetc();
 
 		if (isprint(c)) {
-			putchar(c);
-			buf[i] = c;
-			if (i < max_len - 1) i++;
+			if (i < max_len) {
+				putchar(c);
+				buf[i++] = c;
+			}
 		}
 		else if ((c == CH_CURS_LEFT) || (c == CH_DEL)) {
 			if (i) {
