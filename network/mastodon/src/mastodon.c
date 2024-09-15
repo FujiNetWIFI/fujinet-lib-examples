@@ -23,12 +23,11 @@ char url[] = "n1:https://oldbytes.space/api/v1/timelines/public?limit=1";
 char display_name_query[] = "/0/account/display_name";
 char created_at_query[] = "/0/created_at";
 char content_query[] = "/0/content";
-char version[] = "v1.1.0";
+char version[] = "v1.1.1";
 
 void main(void)
 {
 	uint8_t err;
-	int16_t count;
 
 	setup();
 	clrscr();
@@ -60,7 +59,7 @@ void main(void)
 
 		network_close(url);
 
-		pause(52000);
+		pause(52000L);
 	}
 }
 
@@ -101,7 +100,7 @@ void filter_buf(void)
 {
 	register char *c;
 
-	for (c = buffer; *c != '\0'; ++c) {
+	for (c = (char *) buffer; *c != '\0'; ++c) {
 		if (!isascii(*c) || !isprint(*c)) {
 			*c = '?';
 		}
@@ -110,7 +109,6 @@ void filter_buf(void)
 
 void query_and_filter(char *query) {
 	int16_t count;
-	uint16_t i;
 	count = network_json_query(url, query, (char *) buffer);
 	if (count < 0) {
 			handle_err(-count, "query");
