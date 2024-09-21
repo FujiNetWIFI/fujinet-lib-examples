@@ -1,45 +1,14 @@
-# Generic Build script for CC65
-#
-# THIS VERSION IS SPECIFIC TO fujinet-lib-examples
-# THE ONLY DIFFERENCES BEING USING "../makefiles/" INSTEAD OF "./makefiles/" TO AVOID COPYING INTO EVERY APP DIR
-# AND INCLUDING "./application.mk" TO ALLOW FOR THE ANY APP SPECIFIC VALUES
-#
-# This file is only responsible for compiling source code.
-# It has some hooks for additional behaviour, see Additional Make Files below.
-# 
-# The compilation will look in following directories for source:
-#
-#   src/*.[c|s]               # considered the "top level" dir, you can keep everything in here if you like, will not recurse into subdirs
-#   src/common/**/*.[c|s]     # ie. common files for all platforms not in root dir - allows for splitting functionality out into subdirs
-#   src/<target>/**/*.[c|s]   # ie. including its subdirs - only CURRENT_TARGET files will be found
-#
-# Additional Make Files
-#  This script sources the following files to add additional behaviour.
-#    makefiles/os.mk                 # for platform mappings (e.g. atarixl -> atari, apple2enh -> apple), emulator base settings
-#    makefiles/common.mk             # for things to be added for all platforms
-#    makefiles/custom-<platform>.mk  # for platform specific values, LDFLAGS etc for current PLATFORM (e.g. atari)
-#
-# Additional notes:
-#
-# - To add additional tasks to "all", in the sourced makefiles, add a value to "ALL_TASKS"
-# - For creating platform specific DISK images, add the disk creating task to "DISK_TASKS"
-# - Additional tasks in these makefiles MUST start with a ".", e.g. .atr, .po, .your-complex-rule
-# - To add a suffix to the generated executable, ensure "SUFFIX" variable is set in your platform specific makefile.
-# - All files referenced in this makefile are relative to the ORIGINAL Makefile in the root dir, not this dir
-# - This build supports a VERSION_FILE variable, this can point anywhere in your src tree, and will cause object files to recompile when changed
-#   Example usage:
-#     VERSION_FILE := src/version.txt
-#     VERSION_STRING := $(file < $(VERSION_FILE))
-#     CFLAGS += -DVERSION_STRING=\"$(VERSION_STRING)\"
+# fujinet-lib-examples main build script
 
 # Ensure WSL2 Ubuntu and other linuxes use bash by default instead of /bin/sh, which does not always like the shell commands.
 SHELL := /usr/bin/env bash
 ALL_TASKS =
 DISK_TASKS =
+OBJEXT = . o
+ASMEXT = .s
 
 -include ../../makefiles/os.mk
-
-CC := cl65
+-include ./makefiles/compiler.mk
 
 SRCDIR := src
 BUILD_DIR := build
@@ -52,40 +21,47 @@ rwildcard=$(wildcard $(1)$(2))$(foreach d,$(wildcard $1*), $(call rwildcard,$d/,
 PROGRAM_TGT := $(PROGRAM).$(CURRENT_TARGET)
 
 SOURCES := $(wildcard $(SRCDIR)/*.c)
-SOURCES += $(wildcard $(SRCDIR)/*.s)
+SOURCES += $(wildcard $(SRCDIR)/*$(ASMEXT))
 
-# allow for a src/common/ dir and recursive subdirs
-SOURCES += $(call rwildcard,$(SRCDIR)/common/,*.s)
 SOURCES += $(call rwildcard,$(SRCDIR)/common/,*.c)
-
-# allow src/<target>/ and its recursive subdirs
-SOURCES_TG := $(call rwildcard,$(SRCDIR)/$(CURRENT_TARGET)/,*.s)
-SOURCES_TG += $(call rwildcard,$(SRCDIR)/$(CURRENT_TARGET)/,*.c)
+SOURCES += $(call rwildcard,$(SRCDIR)/common/,*$(ASMEXT))
+SOURCES += $(call rwildcard,$(SRCDIR)/$(CURRENT_TARGET)/,*$(ASMEXT))
+SOURCES += $(call rwildcard,$(SRCDIR)/$(CURRENT_TARGET)/,*.c)
 
 # remove trailing and leading spaces.
 SOURCES := $(strip $(SOURCES))
-SOURCES_TG := $(strip $(SOURCES_TG))
 
-# convert from src/your/long/path/foo.[c|s] to obj/<target>/your/long/path/foo.o
+# convert from src/your/long/path/foo.[c|s] to obj/<target>/your/long/path/foo$(OBJEXT)
 # we need the target because compiling for previous target does not pick up potential macro changes
-OBJ1 := $(SOURCES:.c=.o)
-OBJECTS := $(OBJ1:.s=.o)
+OBJ1 := $(SOURCES:.c=$(OBJEXT))
+OBJECTS := $(OBJ1:$(ASMEXT)=$(OBJEXT))
+
+OBJECTS_ARC := $(OBJECTS)
+
+-include ./makefiles/objects-$(CURRENT_TARGET).mk
+
 OBJECTS := $(OBJECTS:$(SRCDIR)/%=$(OBJDIR)/$(CURRENT_TARGET)/%)
-
-OBJ2 := $(SOURCES_TG:.c=.o)
-OBJECTS_TG := $(OBJ2:.s=.o)
-OBJECTS_TG := $(OBJECTS_TG:$(SRCDIR)/%=$(OBJDIR)/$(CURRENT_TARGET)/%)
-
-OBJECTS += $(OBJECTS_TG)
+OBJECTS_ARC := $(OBJECTS_ARC:$(SRCDIR)/%=$(OBJDIR)/$(CURRENT_TARGET)/%)
 
 # Ensure make recompiles parts it needs to if src files change
-DEPENDS := $(OBJECTS:.o=.d)
+DEPENDS := $(OBJECTS:$(OBJEXT)=.d)
 
-ASFLAGS += --asm-include-dir src/common --asm-include-dir src/$(CURRENT_TARGET)
-CFLAGS += --include-dir src/common --include-dir src/$(CURRENT_TARGET)
+ASFLAGS += \
+	$(INCS_ARG) src/common \
+	$(INCS_ARG) src/$(CURRENT_TARGET) \
+	$(INCS_ARG) $(SRCDIR)
 
-ASFLAGS += --asm-include-dir $(SRCDIR)
-CFLAGS += --include-dir $(SRCDIR)
+ifeq ($(CC),iix compile)
+CFLAGS += \
+	$(INCC_ARG)src/common \
+	$(INCC_ARG)src/$(CURRENT_TARGET)
+	$(INCS_ARG)$(SRCDIR)
+else
+CFLAGS += \
+	$(INCC_ARG) src/common \
+	$(INCC_ARG) src/$(CURRENT_TARGET)
+	$(INCS_ARG) $(SRCDIR)
+endif
 
 # allow for additional flags etc
 -include ../../makefiles/common.mk
@@ -95,8 +71,8 @@ CFLAGS += --include-dir $(SRCDIR)
 -include ./application.mk
 
 define _listing_
-  CFLAGS += --listing $$(@:.o=.lst)
-  ASFLAGS += --listing $$(@:.o=.lst)
+  CFLAGS += --listing $$(@:$(OBJEXT)=.lst)
+  ASFLAGS += --listing $$(@:$(OBJEXT)=.lst)
 endef
 
 define _mapfile_
@@ -151,16 +127,16 @@ SRC_INC_DIRS := \
   $(SRCDIR)
 
 vpath %.c $(SRC_INC_DIRS)
+vpath %$(ASMEXT) $(SRC_INC_DIRS)
 
-$(OBJDIR)/$(CURRENT_TARGET)/%.o: %.c $(VERSION_FILE) | $(OBJDIR)
+$(OBJDIR)/$(CURRENT_TARGET)/%$(OBJEXT): %.c $(VERSION_FILE) | $(OBJDIR)
 	@$(call MKDIR,$(dir $@))
-	$(CC) -t $(CURRENT_TARGET) -c --create-dep $(@:.o=.d) $(CFLAGS) -o $@ $<
+	$(CC) -t $(CURRENT_TARGET) -c --create-dep $(@:$(OBJEXT)=.d) $(CFLAGS) -o $@ $<
 
-vpath %.s $(SRC_INC_DIRS)
 
-$(OBJDIR)/$(CURRENT_TARGET)/%.o: %.s $(VERSION_FILE) | $(OBJDIR)
+$(OBJDIR)/$(CURRENT_TARGET)/%$(OBJEXT): %$(ASMEXT) $(VERSION_FILE) | $(OBJDIR)
 	@$(call MKDIR,$(dir $@))
-	$(CC) -t $(CURRENT_TARGET) -c --create-dep $(@:.o=.d) $(ASFLAGS) -o $@ $<
+	$(CC) -t $(CURRENT_TARGET) -c --create-dep $(@:$(OBJEXT)=.d) $(ASFLAGS) -o $@ $<
 
 
 $(BUILD_DIR)/$(PROGRAM_TGT): $(OBJECTS) $(LIBS) | $(BUILD_DIR)
