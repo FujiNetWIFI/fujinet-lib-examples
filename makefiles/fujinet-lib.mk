@@ -23,10 +23,19 @@ FUJINET_LIB_DOWNLOAD_FILE = $(FUJINET_LIB)/fujinet-lib-$(CURRENT_TARGET)-$(FUJIN
 		curl -sL $(FUJINET_LIB_DOWNLOAD_URL) -o $(FUJINET_LIB_DOWNLOAD_FILE); \
 		echo "Unzipping to $(FUJINET_LIB)"; \
 		unzip -o $(FUJINET_LIB_DOWNLOAD_FILE) -d $(FUJINET_LIB_VERSION_DIR); \
+		if [ "$(CURRENT_TARGET)" == "apple2gs" ]; then \
+		  iix chtyp -t lib $(FUJINET_LIB_VERSION_DIR)/fujinet-apple2gs-$(FUJINET_LIB_VERSION).lib; \
+		fi; \
 		echo "Unzip complete."; \
 	fi
 
-CFLAGS += --include-dir $(FUJINET_LIB_VERSION_DIR)
-ASFLAGS += --asm-include-dir $(FUJINET_LIB_VERSION_DIR)
+ifeq ($(CC),iix compile)
+CFLAGS += $(INCC_ARG)$(FUJINET_LIB_VERSION_DIR)
+ASFLAGS += $(INCS_ARG)$(FUJINET_LIB_VERSION_DIR)
+else
+CFLAGS += $(INCC_ARG) $(FUJINET_LIB_VERSION_DIR)
+ASFLAGS += $(INCS_ARG) $(FUJINET_LIB_VERSION_DIR)
+endif
+
 LIBS += $(FUJINET_LIB_PATH)
 ALL_TASKS += .get_fujinet_lib

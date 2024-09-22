@@ -4,11 +4,11 @@
 SHELL := /usr/bin/env bash
 ALL_TASKS =
 DISK_TASKS =
-OBJEXT = . o
+OBJEXT = .o
 ASMEXT = .s
 
 -include ../../makefiles/os.mk
--include ./makefiles/compiler.mk
+-include ../../makefiles/compiler.mk
 
 SRCDIR := src
 BUILD_DIR := build
@@ -38,7 +38,7 @@ OBJECTS := $(OBJ1:$(ASMEXT)=$(OBJEXT))
 
 OBJECTS_ARC := $(OBJECTS)
 
--include ./makefiles/objects-$(CURRENT_TARGET).mk
+-include ../../makefiles/objects-$(CURRENT_TARGET).mk
 
 OBJECTS := $(OBJECTS:$(SRCDIR)/%=$(OBJDIR)/$(CURRENT_TARGET)/%)
 OBJECTS_ARC := $(OBJECTS_ARC:$(SRCDIR)/%=$(OBJDIR)/$(CURRENT_TARGET)/%)
@@ -54,13 +54,13 @@ ASFLAGS += \
 ifeq ($(CC),iix compile)
 CFLAGS += \
 	$(INCC_ARG)src/common \
-	$(INCC_ARG)src/$(CURRENT_TARGET)
-	$(INCS_ARG)$(SRCDIR)
+	$(INCC_ARG)src/$(CURRENT_TARGET) \
+	$(INCC_ARG)$(SRCDIR)
 else
 CFLAGS += \
 	$(INCC_ARG) src/common \
-	$(INCC_ARG) src/$(CURRENT_TARGET)
-	$(INCS_ARG) $(SRCDIR)
+	$(INCC_ARG) src/$(CURRENT_TARGET) \
+	$(INCC_ARG) $(SRCDIR)
 endif
 
 # allow for additional flags etc
@@ -70,47 +70,14 @@ endif
 # allow for application specific config
 -include ./application.mk
 
-define _listing_
-  CFLAGS += --listing $$(@:$(OBJEXT)=.lst)
-  ASFLAGS += --listing $$(@:$(OBJEXT)=.lst)
-endef
-
-define _mapfile_
-  LDFLAGS += --mapfile $$@.map
-endef
-
-define _labelfile_
-  LDFLAGS += -Ln $$@.lbl
-endef
-
 .SUFFIXES:
 .PHONY: all clean release $(DISK_TASKS) $(BUILD_TASKS) $(PROGRAM_TGT) $(ALL_TASKS)
 
+$(info LIBS: $(LIBS))
+
 all: $(ALL_TASKS) $(PROGRAM_TGT)
 
-STATEFILE := Makefile.options
 -include $(DEPENDS)
--include $(STATEFILE)
-
-ifeq ($(origin _OPTIONS_),file)
-OPTIONS = $(_OPTIONS_)
-$(eval $(OBJECTS): $(STATEFILE))
-endif
-
-# Transform the abstract OPTIONS to the actual cc65 options.
-$(foreach o,$(subst $(COMMA),$(SPACE),$(OPTIONS)),$(eval $(_$o_)))
-
-ifeq ($(BUILD_DIR),)
-BUILD_DIR := build
-endif
-
-ifeq ($(OBJDIR),)
-OBJDIR := obj
-endif
-
-ifeq ($(DIST_DIR),)
-DIST_DIR := dist
-endif
 
 $(OBJDIR):
 	$(call MKDIR,$@)
@@ -131,16 +98,35 @@ vpath %$(ASMEXT) $(SRC_INC_DIRS)
 
 $(OBJDIR)/$(CURRENT_TARGET)/%$(OBJEXT): %.c $(VERSION_FILE) | $(OBJDIR)
 	@$(call MKDIR,$(dir $@))
-	$(CC) -t $(CURRENT_TARGET) -c --create-dep $(@:$(OBJEXT)=.d) $(CFLAGS) -o $@ $<
+ifeq ($(CC),cl65)
+	$(CC) -t $(CURRENT_TARGET) -c --create-dep $(@:.o=.d) $(CFLAGS) --listing $(@:.o=.lst) -Ln $@.lbl -o $@ $<
+else ifeq ($(CC),iix compile)
+	$(CC) $(CFLAGS) $< keep=$(subst .root,,$@)
+else
+	$(CC) -c --deps $(CFLAGS) -o $@ $<
+endif
 
 
 $(OBJDIR)/$(CURRENT_TARGET)/%$(OBJEXT): %$(ASMEXT) $(VERSION_FILE) | $(OBJDIR)
 	@$(call MKDIR,$(dir $@))
-	$(CC) -t $(CURRENT_TARGET) -c --create-dep $(@:$(OBJEXT)=.d) $(ASFLAGS) -o $@ $<
+ifeq ($(CC),cl65)
+	$(CC) -t $(CURRENT_TARGET) -c --create-dep $(@:.o=.d) $(CFLAGS) --listing $(@:.o=.lst) -Ln $@.lbl -o $@ $<
+else ifeq ($(CC),iix compile)
+	$(CC) $(CFLAGS) $< keep=$(subst .root,,$@)
+else
+	$(CC) -c --deps $(CFLAGS) -o $@ $<
+endif
 
 
 $(BUILD_DIR)/$(PROGRAM_TGT): $(OBJECTS) $(LIBS) | $(BUILD_DIR)
-	$(CC) -t $(CURRENT_TARGET) $(LDFLAGS) -o $@ $^
+ifeq ($(CC),cl65)
+	$(CC) -t $(CURRENT_TARGET) $(LDFLAGS) -o $@ $<
+else ifeq ($(CC),iix compile)
+	@echo "TODO: What is the compile command for the application on apple2gs"
+	# $(CC) $(CFLAGS) $< keep=$(subst .root,,$@)
+else
+	@echo "TODO: Other compilers go here"
+endif
 
 $(PROGRAM_TGT): $(BUILD_DIR)/$(PROGRAM_TGT) | $(BUILD_DIR)
 

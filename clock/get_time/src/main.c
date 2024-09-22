@@ -118,7 +118,7 @@ void test_tz() {
 	printf("\nRestoring TZ\n");
 	clock_set_tz(current_tz);
 
-	clock_get_tz(buffer);
+	clock_get_tz((char *) buffer);
 	printf("Current tz: %s\n", buffer);
 
 	// and should be back to original iso
