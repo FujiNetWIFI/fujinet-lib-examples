@@ -7,11 +7,15 @@
 #include "fujinet-clock.h"
 #include "main.h"
 
-char *version = "v1.0.1";
+char *version = "v1.0.2";
 
 uint8_t buffer[128];
 char current_tz[128];
 uint8_t i = 0;
+
+#ifdef __APPLE2__
+extern uint8_t sp_network;
+#endif
 
 void debug() {
 }
@@ -36,6 +40,10 @@ int main(void)
 	// test getting and setting the current timezone
 	test_tz();
 
+#ifdef __APPLE2__
+	// just to prove we didn't trash the network id when doing clock lookup.
+	printf("network_id: %u\n", sp_network);
+#endif
 	cgetc();
 	return 0;
 }
@@ -99,10 +107,9 @@ void ape_utc_time() {
 }
 
 void test_tz() {
-	// get the current system TZ
 	memset(current_tz, 0, 128);
 
-	// debug();
+	// get the current system TZ
 	clock_get_tz(current_tz);
 	printf("Current tz: %s\n", current_tz);
 

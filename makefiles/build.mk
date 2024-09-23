@@ -2,8 +2,8 @@
 
 # Ensure WSL2 Ubuntu and other linuxes use bash by default instead of /bin/sh, which does not always like the shell commands.
 SHELL := /usr/bin/env bash
-ALL_TASKS =
-DISK_TASKS =
+# ALL_TASKS :=
+# DISK_TASKS :=
 OBJEXT = .o
 ASMEXT = .s
 
@@ -73,8 +73,6 @@ endif
 .SUFFIXES:
 .PHONY: all clean release $(DISK_TASKS) $(BUILD_TASKS) $(PROGRAM_TGT) $(ALL_TASKS)
 
-$(info LIBS: $(LIBS))
-
 all: $(ALL_TASKS) $(PROGRAM_TGT)
 
 -include $(DEPENDS)
@@ -99,7 +97,7 @@ vpath %$(ASMEXT) $(SRC_INC_DIRS)
 $(OBJDIR)/$(CURRENT_TARGET)/%$(OBJEXT): %.c $(VERSION_FILE) | $(OBJDIR)
 	@$(call MKDIR,$(dir $@))
 ifeq ($(CC),cl65)
-	$(CC) -t $(CURRENT_TARGET) -c --create-dep $(@:.o=.d) $(CFLAGS) --listing $(@:.o=.lst) -Ln $@.lbl -o $@ $<
+	$(CC) -t $(CURRENT_TARGET) -c --create-dep $(@:.o=.d) $(CFLAGS) --listing $(@:.o=.lst) -o $@ $<
 else ifeq ($(CC),iix compile)
 	$(CC) $(CFLAGS) $< keep=$(subst .root,,$@)
 else
@@ -110,7 +108,7 @@ endif
 $(OBJDIR)/$(CURRENT_TARGET)/%$(OBJEXT): %$(ASMEXT) $(VERSION_FILE) | $(OBJDIR)
 	@$(call MKDIR,$(dir $@))
 ifeq ($(CC),cl65)
-	$(CC) -t $(CURRENT_TARGET) -c --create-dep $(@:.o=.d) $(CFLAGS) --listing $(@:.o=.lst) -Ln $@.lbl -o $@ $<
+	$(CC) -t $(CURRENT_TARGET) -c --create-dep $(@:.o=.d) $(CFLAGS) --listing $(@:.o=.lst) -o $@ $<
 else ifeq ($(CC),iix compile)
 	$(CC) $(CFLAGS) $< keep=$(subst .root,,$@)
 else
@@ -120,7 +118,7 @@ endif
 
 $(BUILD_DIR)/$(PROGRAM_TGT): $(OBJECTS) $(LIBS) | $(BUILD_DIR)
 ifeq ($(CC),cl65)
-	$(CC) -t $(CURRENT_TARGET) $(LDFLAGS) -o $@ $<
+	$(CC) -t $(CURRENT_TARGET) $(LDFLAGS) --mapfile $@.map -Ln $@.lbl -o $@ $^
 else ifeq ($(CC),iix compile)
 	@echo "TODO: What is the compile command for the application on apple2gs"
 	# $(CC) $(CFLAGS) $< keep=$(subst .root,,$@)
