@@ -68,13 +68,10 @@ void setup(void)
 	uint8_t init_r, screen_height;
 
 #ifdef __APPLE2__
-#ifdef __APPLE2ENH__
 	videomode(VIDEOMODE_80COL);
-#else
-	if (get_ostype() >= APPLE_IIIEM) {
+	if (get_ostype() == APPLE_IIIEM) {
 		allow_lowercase(true);
 	}
-#endif
 #endif
 
 #ifdef __ATARI__
