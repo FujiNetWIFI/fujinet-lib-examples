@@ -1,7 +1,9 @@
 #ifndef HTTPBIN_H
 #define HTTPBIN_H
 
+#ifndef _CMOC_VERSION_
 #include <stdint.h>
+#endif
 
 void add_header(char *devicespec, char *header);
 char *create_url(char *method);

@@ -1,36 +1,41 @@
-# Generic CC65 TARGETS makefile++
-#
-# Set the TARGETS and PROGRAM values as required.
-# See makefiles/build.mk for details on directory structure for src files and how to add custom extensions to the build.
+PRODUCT = httpbin
+PLATFORMS = coco apple2 atari c64 adam msdos msxrom adam_cpm
 
-TARGETS = atari apple2 apple2enh c64
-PROGRAM := httpbin
+# You can run 'make <platform>' to build for a specific platform,
+# or 'make <platform>/<target>' for a platform-specific target.
+# Example shortcuts:
+#   make coco        → build for coco
+#   make apple2/disk → build the 'disk' target for apple2
 
-SUB_TASKS := clean disk test release
-.PHONY: all help $(SUB_TASKS)
+# SRC_DIRS may use the literal %PLATFORM% token.
+# It expands to the chosen PLATFORM plus any of its combos.
+SRC_DIRS = src src/common src/%PLATFORM%
 
-all:
-	@for target in $(TARGETS); do \
-		echo "-------------------------------------"; \
-		echo "Building $$target"; \
-		echo "-------------------------------------"; \
-		$(MAKE) --no-print-directory -f ../../makefiles/build.mk CURRENT_TARGET=$$target PROGRAM=$(PROGRAM) $(MAKECMDGOALS); \
-	done
+INCLUDE_DIRS += src/common
+# FUJINET_LIB can be
+# - a version number such as 4.7.6
+# - a directory which contains the libs for each platform
+# - a zip file with an archived fujinet-lib
+# - a URL to a git repo
+# - empty which will use whatever is the latest
+# - undefined, no fujinet-lib will be used
+#FUJINET_LIB = https://github.com/FozzTexx/fujinet-lib-experimental
+FUJINET_LIB = ${HOME}/fujinet-lib
 
-$(SUB_TASKS): _do_all
-$(SUB_TASKS):
-	@:
+# Define extra dirs ("combos") that expand with a platform.
+# Format: platform+=combo1,combo2
+PLATFORM_COMBOS = \
+  c64+=commodore \
+  atarixe+=atari \
+  msxrom+=msx \
+  msxdos+=msx \
+  adam_cpm+=adam
 
-_do_all: all
+CFLAGS_EXTRA_COCO += -Wno-const  
+include makefiles/toplevel-rules.mk
 
-help:
-	@echo "Makefile for $(PROGRAM)"
-	@echo ""
-	@echo "Available tasks:"
-	@echo "all       - do all compilation tasks, create app in build directory"
-	@echo "clean     - remove all build artifacts"
-	@echo "disk      - generate platform specific disk versions of application (PO/ATR etc)"
-	@echo "test      - run application in emulator for given platform."
-	@echo "            specific platforms may expose additional variables to run with"
-	@echo "            different emulators, see makefiles/custom-<platform>.mk"
-	@echo "release   - create a release of the executable in the dist/ dir"
+# If you need to add extra platform-specific steps, do it below:
+#   coco/r2r:: coco/custom-step1
+#   coco/r2r:: coco/custom-step2
+# or
+#   apple2/disk: apple2/custom-step1 apple2/custom-step2
