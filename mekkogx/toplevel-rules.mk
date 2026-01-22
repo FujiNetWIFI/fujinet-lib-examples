@@ -4,7 +4,7 @@ R2R_DIR = r2r
 BUILD_DIR = build
 CACHE_DIR = _cache
 
-MAKEFILE_DIR = makefiles
+MAKEFILE_DIR = $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 
 # Make a list of the things we want to build which combine R2R dir, app name, and platform
 APP_TARGETS := $(foreach p, $(PLATFORMS), $(R2R_DIR)/$(p)/$(PRODUCT))
@@ -43,6 +43,6 @@ $(PLATFORMS): %: $(R2R_DIR)/%/$(PRODUCT)
 	@target="$@" ; case "$@" in \
 	  */*/*)   echo "No rule to make target '$@'"; exit 1;; \
 	  */*)     platform=$${target%/*}; target=$${target##*/}; \
-	           $(MAKE) -f makefiles/platforms/$${platform}.mk $${target} ;; \
+	           $(MAKE) -f $(MAKEFILE_DIR)/platforms/$${platform}.mk $${target} ;; \
 	  *)       echo "No rule to make target '$@'"; exit 1;; \
 	esac

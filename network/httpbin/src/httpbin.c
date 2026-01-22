@@ -163,7 +163,7 @@ void test_post() {
 void test_put() {
     int n = 0;
     url = create_url("put");
-    err = network_open(url, OPEN_MODE_HTTP_PUT, trans_type_text);
+    err = network_open(url, OPEN_MODE_HTTP_PUT_H, trans_type_text);
     handle_err("put:open");
 
     add_json_headers(url);
