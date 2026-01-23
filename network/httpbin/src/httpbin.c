@@ -1,3 +1,10 @@
+#ifdef _CMOC_VERSION_
+#include <coco.h>
+#define doesclrscrafterexit() 0
+#define clrscr() cls(1)
+#define cgetc() waitkey(0)
+#define isprint(c) (c>=0x20 && c<=0x8E)
+#else
 #include <cc65.h>
 #include <conio.h>
 #include <ctype.h>
@@ -5,7 +12,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-
+#endif
 #include "fujinet-network.h"
 
 #include "httpbin.h"
@@ -40,8 +47,18 @@ uint8_t trans_type_binary = OPEN_TRANS_NONE;
 void debug() {}
 
 int main(void) {
+#ifdef _CMOC_VERSION_
+    initCoCoSupport();
+    if (isCoCo3)
+    {
+        width(80);
+    }
+#endif
+
     clrscr();
+#ifndef _CMOC_VERSION_
     gotox(0);
+#endif
     printf("httpbin %s\n", get_version());
     printf("Base URL: %s\n", httpbin);
 
@@ -81,9 +98,11 @@ int main(void) {
 
 void setup() {
     uint8_t init_r = 0;
-    bzero(url_buffer, 128);
-    bzero(result, 1024);
+    memset(url_buffer, '\0', sizeof(url_buffer));
+    memset(result, '\0', sizeof(result));
+#ifndef _CMOC_VERSION_
     gotox(0);
+#endif
     init_r = network_init();
     printf("init: %d, derr: %d\n", init_r, fn_device_error);
   #ifdef __APPLE2__
@@ -112,7 +131,7 @@ void test_get_query(char *path) {
 }
 
 void end_get() {
-    err = network_close(url);
+    err = network_close(url);   
     handle_err("close json");
 }
 
@@ -159,7 +178,7 @@ void test_put() {
     }
 
     printf("/put    : level=>%s<\n", result);
-    err = network_close(url);
+    err = network_close(url); 
     handle_err("put:close");
 }
 
@@ -180,7 +199,7 @@ void test_delete() {
         handle_err("del:json query");
     }
     printf("/delete :  host=>%s<\n", result);
-    err = network_close(url);
+    err = network_close(url);  
     handle_err("del:close");
 }
 
@@ -202,18 +221,20 @@ void test_array_simple() {
     // we go past the end of the array to show it returns empty string
     for (i = 0; i < 4; i++) {
         sprintf(path, "/json/ns/%d", i);
+        printf("Querying JSON (%s)\n", path);
         n = network_json_query(url, path, result);
         printf("/array-simple:  ns[%d]=>%s<\n", i, result);
     }
 
     for (i = 0; i < 4; i++) {
         sprintf(path, "/json/ss/%d", i);
+        printf("Querying JSON (%s)\n", path);
         n = network_json_query(url, path, result);
         printf("/array-simple:  ss[%d]=>%s<\n", i, result);
     }
 
-    err = network_close(url);
-    handle_err("post:close");
+    err = network_close(url);  
+    handle_err("post:close");   
 }
 
 // -------------------------------------------------------------------------------
@@ -236,8 +257,8 @@ void test_array_object() {
 
     printf("object array test -----\n");
     printf("/array-obj:  args=>%s<\n", result);
-    err = network_close(url);
-    handle_err("post:close");
+    err = network_close(url);  
+    handle_err("post:close");  
 }
 
 
@@ -261,8 +282,8 @@ void test_simple_get() {
     printf("simple read (same as GET):\n");
     hex_dump(result, 40);
 
-    err = network_close(url);
-    handle_err("del:close");
+    err = network_close(url);   
+    handle_err("del:close");    
 }
 
 // use a redirect with PNG return to test header content types and locations
